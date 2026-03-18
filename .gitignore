@@ -1,0 +1,34 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Models (large binary files)
+src/models/*.pkl
+src/models/*.pt
+
+# Data
+data/generated/*
+data/benchmark/*
+!data/generated/.gitkeep
+!data/benchmark/.gitkeep
+
+# Environment
+.env
+*.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# pytest
+.pytest_cache/
+
+# Claude
+.claude/

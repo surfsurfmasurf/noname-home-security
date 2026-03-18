@@ -1,0 +1,17 @@
+name: noname-sec
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - scikit-learn
+  - pytorch
+  - pyyaml
+  - pytest
+  - pip
+  - pip:
+    - elasticsearch>=8.0.0
+    - anthropic>=0.40.0
