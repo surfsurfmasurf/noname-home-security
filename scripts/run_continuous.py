@@ -120,6 +120,8 @@ def main():
                         help="Events per second to generate")
     parser.add_argument("--no-llm", action="store_true",
                         help="Skip LLM analysis")
+    parser.add_argument("--llm-threshold", type=float, default=50,
+                        help="Min anomaly score to send to LLM (default: 50)")
     parser.add_argument("--no-es", action="store_true",
                         help="Skip Elasticsearch")
     parser.add_argument("--config", type=str, default="config/settings.yaml")
@@ -192,11 +194,36 @@ def main():
     ]
 
     if not args.no_llm:
-        analyst = LLMAnalyst(alerts_queue, actions_queue, config)
+        llm_queue = LocalQueue()  # filtered queue for LLM
+        analyst = LLMAnalyst(llm_queue, actions_queue, config)
+        llm_threshold = args.llm_threshold
+
+        def llm_filter_loop():
+            """Route alerts: high-score → LLM, low-score → passthrough."""
+            while not shutdown_event.is_set():
+                alert = alerts_queue.get(timeout=1.0)
+                if alert is None:
+                    continue
+                score = alert.get("anomaly_score", 0)
+                if score >= llm_threshold:
+                    logger.info(f"Sending to LLM (score={score:.1f}): {alert.get('src_ip')}")
+                    llm_queue.put(alert)
+                else:
+                    alert["llm_analysis"] = "(Below LLM threshold)"
+                    alert["severity"] = (
+                        "HIGH" if score >= 70 else "MEDIUM"
+                    )
+                    alert["recommended_action"] = "investigate"
+                    actions_queue.put(alert)
+
+        threads.append(
+            threading.Thread(target=llm_filter_loop, name="llm_filter", daemon=True)
+        )
         threads.append(
             threading.Thread(target=analyst_loop, args=(analyst,),
                              name="analyst", daemon=True)
         )
+        logger.info(f"LLM enabled for alerts with score >= {llm_threshold}")
     else:
         # Without LLM, pass alerts directly to actions queue
         def passthrough_loop():
