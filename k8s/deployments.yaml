@@ -1,0 +1,195 @@
+# ============================================================
+# Deployment 1: Desktop Browser Traffic
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: noname-desktop-browser
+  namespace: noname-security
+  labels:
+    app: noname-security
+    profile: desktop-browser
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: noname-security
+      profile: desktop-browser
+  template:
+    metadata:
+      labels:
+        app: noname-security
+        profile: desktop-browser
+    spec:
+      containers:
+      - name: noname-agent
+        image: noname-security:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: CONTAINER_ID
+          value: "container-1-desktop"
+        - name: PROFILE
+          value: "desktop_browser"
+        args: ["--rate", "5"]
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: config
+          mountPath: /app/config/settings.yaml
+          subPath: settings.yaml
+      volumes:
+      - name: config
+        configMap:
+          name: noname-config
+---
+# ============================================================
+# Deployment 2: Mobile App Traffic
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: noname-mobile-app
+  namespace: noname-security
+  labels:
+    app: noname-security
+    profile: mobile-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: noname-security
+      profile: mobile-app
+  template:
+    metadata:
+      labels:
+        app: noname-security
+        profile: mobile-app
+    spec:
+      containers:
+      - name: noname-agent
+        image: noname-security:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: CONTAINER_ID
+          value: "container-2-mobile"
+        - name: PROFILE
+          value: "mobile_app"
+        args: ["--rate", "3"]
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: config
+          mountPath: /app/config/settings.yaml
+          subPath: settings.yaml
+      volumes:
+      - name: config
+        configMap:
+          name: noname-config
+---
+# ============================================================
+# Deployment 3: Smart Camera Traffic
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: noname-smart-camera
+  namespace: noname-security
+  labels:
+    app: noname-security
+    profile: smart-camera
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: noname-security
+      profile: smart-camera
+  template:
+    metadata:
+      labels:
+        app: noname-security
+        profile: smart-camera
+    spec:
+      containers:
+      - name: noname-agent
+        image: noname-security:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: CONTAINER_ID
+          value: "container-3-camera"
+        - name: PROFILE
+          value: "smart_camera"
+        args: ["--rate", "4"]
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: config
+          mountPath: /app/config/settings.yaml
+          subPath: settings.yaml
+      volumes:
+      - name: config
+        configMap:
+          name: noname-config
+---
+# ============================================================
+# Deployment 4: Backend Service Traffic
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: noname-backend-service
+  namespace: noname-security
+  labels:
+    app: noname-security
+    profile: backend-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: noname-security
+      profile: backend-service
+  template:
+    metadata:
+      labels:
+        app: noname-security
+        profile: backend-service
+    spec:
+      containers:
+      - name: noname-agent
+        image: noname-security:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: CONTAINER_ID
+          value: "container-4-backend"
+        - name: PROFILE
+          value: "backend_service"
+        args: ["--rate", "8"]
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: config
+          mountPath: /app/config/settings.yaml
+          subPath: settings.yaml
+      volumes:
+      - name: config
+        configMap:
+          name: noname-config

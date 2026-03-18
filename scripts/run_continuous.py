@@ -9,6 +9,7 @@ Usage:
 
 import argparse
 import logging
+import os
 import signal
 import sys
 import threading
@@ -21,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.queue import LocalQueue
 from src.generator import TrafficGenerator
+from src.generator.profiles import DEFAULT_PROFILES
 from src.collector import Collector
 from src.detector import Detector
 from src.analyst import LLMAnalyst
@@ -125,6 +127,21 @@ def main():
 
     config = load_config(args.config)
 
+    # --- Container / Profile from env ---
+    container_id = os.environ.get("CONTAINER_ID", "default")
+    profile_name = os.environ.get("PROFILE", "")
+
+    profiles = None
+    if profile_name:
+        profiles = [p for p in DEFAULT_PROFILES if p.name == profile_name]
+        if not profiles:
+            available = [p.name for p in DEFAULT_PROFILES]
+            logger.error(f"Unknown profile: {profile_name}. Available: {available}")
+            sys.exit(1)
+        logger.info(f"Using profile: {profile_name}")
+
+    logger.info(f"Container ID: {container_id}")
+
     # --- Queues ---
     raw_queue = LocalQueue()
     features_queue = LocalQueue()
@@ -147,7 +164,7 @@ def main():
             es_client = None
 
     # --- Agents ---
-    generator = TrafficGenerator(raw_queue, config)
+    generator = TrafficGenerator(raw_queue, config, profiles=profiles)
     collector = Collector(raw_queue, features_queue, config)
     detector = Detector(features_queue, alerts_queue, None, config)
 

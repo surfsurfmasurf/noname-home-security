@@ -1,5 +1,6 @@
 """Traffic Generator Agent — produces synthetic normal + attack traffic."""
 
+import os
 import random
 import uuid
 from datetime import datetime, timezone
@@ -20,6 +21,7 @@ class TrafficGenerator:
         self.seed = config.get("generator", {}).get("seed", 42)
         self.profiles = profiles or DEFAULT_PROFILES
         self.attacks = attacks or DEFAULT_ATTACKS
+        self.container_id = os.environ.get("CONTAINER_ID", "default")
 
         random.seed(self.seed)
         self._attack_patterns, self._attack_weights = zip(*self.attacks)
@@ -44,17 +46,14 @@ class TrafficGenerator:
             "dst_port": 443,
             "method": endpoint["method"],
             "path": endpoint["path"],
-            "query_params": "",
-            "headers": {
-                "User-Agent": profile.get_user_agent(),
-                "Content-Type": "application/json",
-                "Content-Length": str(profile.get_payload_size()),
-            },
+            "query_params": endpoint.get("query_params", ""),
+            "headers": profile.get_headers(),
             "payload_size": profile.get_payload_size(),
             "response_code": endpoint["response_code"],
-            "response_size": profile.get_response_size(),
-            "response_time_ms": profile.get_response_time(),
+            "response_size": profile.get_response_size(endpoint["method"]),
+            "response_time_ms": profile.get_response_time(hour),
             "label": "normal",
+            "container_id": self.container_id,
         }
 
     def generate_attack(self, hour: int | None = None) -> dict:
@@ -68,6 +67,7 @@ class TrafficGenerator:
         event = pattern.generate(hour)
         event["request_id"] = str(uuid.uuid4())
         event["timestamp"] = datetime.now(timezone.utc).isoformat()
+        event["container_id"] = self.container_id
         return event
 
     def generate_batch(self, count: int, hour: int | None = None) -> list[dict]:

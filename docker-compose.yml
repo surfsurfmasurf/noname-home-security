@@ -1,0 +1,36 @@
+services:
+  desktop-browser:
+    build: .
+    container_name: noname-desktop
+    environment:
+      - CONTAINER_ID=container-1-desktop
+      - PROFILE=desktop_browser
+    command: ["--rate", "5"]
+    restart: unless-stopped
+
+  mobile-app:
+    build: .
+    container_name: noname-mobile
+    environment:
+      - CONTAINER_ID=container-2-mobile
+      - PROFILE=mobile_app
+    command: ["--rate", "3"]
+    restart: unless-stopped
+
+  smart-camera:
+    build: .
+    container_name: noname-camera
+    environment:
+      - CONTAINER_ID=container-3-camera
+      - PROFILE=smart_camera
+    command: ["--rate", "4"]
+    restart: unless-stopped
+
+  backend-service:
+    build: .
+    container_name: noname-backend
+    environment:
+      - CONTAINER_ID=container-4-backend
+      - PROFILE=backend_service
+    command: ["--rate", "8"]
+    restart: unless-stopped

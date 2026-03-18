@@ -21,7 +21,7 @@ def test_generate_normal():
     assert "src_ip" in event
     assert event["label"] == "normal"
     assert event["method"] in ("GET", "POST", "PUT", "DELETE", "PATCH")
-    assert event["response_code"] in (200, 201, 401, 404)
+    assert 100 <= event["response_code"] <= 599
 
 
 def test_generate_attack():

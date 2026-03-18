@@ -1,6 +1,7 @@
 """Elasticsearch client for storing and querying security events."""
 
 import logging
+import os
 from datetime import datetime, timezone
 
 from elasticsearch import Elasticsearch
@@ -28,6 +29,7 @@ INDEX_MAPPINGS = {
             "severity": {"type": "keyword"},
             "llm_analysis": {"type": "text"},
             "recommended_action": {"type": "keyword"},
+            "container_id": {"type": "keyword"},
         }
     },
     "noname-all-traffic": {
@@ -38,6 +40,7 @@ INDEX_MAPPINGS = {
             "raw_summary": {"type": "text"},
             "anomaly_score": {"type": "float"},
             "label": {"type": "keyword"},
+            "container_id": {"type": "keyword"},
         }
     },
 }
@@ -85,8 +88,23 @@ class ESClient:
             "raw_summary": result.get("raw_summary"),
             "anomaly_score": result.get("anomaly_score"),
             "label": result.get("label"),
+            "container_id": result.get("container_id",
+                                       os.environ.get("CONTAINER_ID", "default")),
         }
         self.es.index(index="noname-all-traffic", document=doc)
+
+    def update_mappings(self) -> None:
+        """Add container_id field to existing indices (safe to call multiple times)."""
+        for index_name in INDEX_MAPPINGS:
+            try:
+                if self.es.indices.exists(index=index_name):
+                    self.es.indices.put_mapping(
+                        index=index_name,
+                        properties={"container_id": {"type": "keyword"}},
+                    )
+                    logger.info(f"Updated mapping for {index_name}")
+            except Exception as e:
+                logger.debug(f"Mapping update for {index_name}: {e}")
 
     def search_alerts(self, min_score: float = 0, size: int = 100) -> list[dict]:
         """Query alerts above a minimum anomaly score."""

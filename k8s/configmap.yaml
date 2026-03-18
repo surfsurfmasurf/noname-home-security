@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: noname-config
+  namespace: noname-security
+data:
+  settings.yaml: |
+    elasticsearch:
+      host: "http://172.233.75.253:9200"
+      index_prefix: "noname"
+      indices:
+        raw_traffic: "noname-raw-traffic"
+        features: "noname-features"
+        alerts: "noname-alerts"
+        analysis: "noname-analysis"
+
+    queue:
+      type: "local"
+
+    generator:
+      normal_ratio: 0.8
+      attack_ratio: 0.2
+      events_per_second: 10
+      seed: 42
+
+    collector:
+      window_seconds: 300
+
+    detector:
+      models_dir: "src/models"
+      threshold:
+        alert: 50
+        block: 80
+      ensemble_weights:
+        isolation_forest: 0.4
+        autoencoder: 0.4
+        signature: 0.2
+      isolation_forest:
+        n_estimators: 100
+        contamination: 0.1
+      autoencoder:
+        hidden_dim: 8
+        latent_dim: 4
+        epochs: 50
+        learning_rate: 0.001
+        batch_size: 64
+
+    analyst:
+      model: "claude-sonnet-4-20250514"
+      max_tokens: 1024
+
+    action:
+      mode: "log"
