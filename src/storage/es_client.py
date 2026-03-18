@@ -10,38 +10,34 @@ logger = logging.getLogger(__name__)
 # Index mappings for structured data
 INDEX_MAPPINGS = {
     "noname-alerts": {
-        "mappings": {
-            "properties": {
-                "request_id": {"type": "keyword"},
-                "timestamp": {"type": "date"},
-                "src_ip": {"type": "ip"},
-                "raw_summary": {"type": "text"},
-                "anomaly_score": {"type": "float"},
-                "model_scores": {
-                    "properties": {
-                        "isolation_forest": {"type": "float"},
-                        "autoencoder": {"type": "float"},
-                        "signature": {"type": "keyword"},
-                    }
-                },
-                "features": {"type": "object", "enabled": False},
-                "label": {"type": "keyword"},
-                "severity": {"type": "keyword"},
-                "llm_analysis": {"type": "text"},
-                "recommended_action": {"type": "keyword"},
-            }
+        "properties": {
+            "request_id": {"type": "keyword"},
+            "timestamp": {"type": "date"},
+            "src_ip": {"type": "ip"},
+            "raw_summary": {"type": "text"},
+            "anomaly_score": {"type": "float"},
+            "model_scores": {
+                "properties": {
+                    "isolation_forest": {"type": "float"},
+                    "autoencoder": {"type": "float"},
+                    "signature": {"type": "keyword"},
+                }
+            },
+            "features": {"type": "object", "enabled": False},
+            "label": {"type": "keyword"},
+            "severity": {"type": "keyword"},
+            "llm_analysis": {"type": "text"},
+            "recommended_action": {"type": "keyword"},
         }
     },
     "noname-all-traffic": {
-        "mappings": {
-            "properties": {
-                "request_id": {"type": "keyword"},
-                "timestamp": {"type": "date"},
-                "src_ip": {"type": "ip"},
-                "raw_summary": {"type": "text"},
-                "anomaly_score": {"type": "float"},
-                "label": {"type": "keyword"},
-            }
+        "properties": {
+            "request_id": {"type": "keyword"},
+            "timestamp": {"type": "date"},
+            "src_ip": {"type": "ip"},
+            "raw_summary": {"type": "text"},
+            "anomaly_score": {"type": "float"},
+            "label": {"type": "keyword"},
         }
     },
 }
@@ -59,9 +55,12 @@ class ESClient:
 
     def init_indices(self) -> None:
         """Create indices with mappings if they don't exist."""
-        for index_name, body in INDEX_MAPPINGS.items():
+        for index_name, mappings in INDEX_MAPPINGS.items():
             if not self.es.indices.exists(index=index_name):
-                self.es.indices.create(index=index_name, body=body)
+                self.es.indices.create(
+                    index=index_name,
+                    mappings=mappings,
+                )
                 logger.info(f"Created index: {index_name}")
             else:
                 logger.info(f"Index already exists: {index_name}")
@@ -70,7 +69,8 @@ class ESClient:
     def index_alert(self, alert: dict) -> None:
         """Index an alert document."""
         doc = {**alert}
-        # Ensure timestamp is in ISO format
+        # Remove feature_vector (not needed in ES, large)
+        doc.pop("feature_vector", None)
         if "timestamp" not in doc:
             doc["timestamp"] = datetime.now(timezone.utc).isoformat()
         self.es.index(index="noname-alerts", document=doc)
@@ -92,13 +92,9 @@ class ESClient:
         """Query alerts above a minimum anomaly score."""
         result = self.es.search(
             index="noname-alerts",
-            body={
-                "query": {
-                    "range": {"anomaly_score": {"gte": min_score}}
-                },
-                "sort": [{"timestamp": "desc"}],
-                "size": size,
-            },
+            query={"range": {"anomaly_score": {"gte": min_score}}},
+            sort=[{"timestamp": "desc"}],
+            size=size,
         )
         return [hit["_source"] for hit in result["hits"]["hits"]]
 
