@@ -29,6 +29,9 @@ INDEX_MAPPINGS = {
             "severity": {"type": "keyword"},
             "llm_analysis": {"type": "text"},
             "recommended_action": {"type": "keyword"},
+            "is_threat": {"type": "boolean"},
+            "attack_type": {"type": "keyword"},
+            "llm_analyzed": {"type": "boolean"},
             "container_id": {"type": "keyword"},
         }
     },
