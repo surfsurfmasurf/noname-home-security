@@ -109,13 +109,18 @@ class LLMAnalyst:
             "request_id": alert.get("request_id", ""),
             "timestamp": alert.get("timestamp", ""),
             "src_ip": alert.get("src_ip", ""),
+            "raw_summary": alert.get("raw_summary", ""),
             "anomaly_score": alert.get("anomaly_score", 0),
+            "model_scores": alert.get("model_scores", {}),
+            "features": alert.get("features", {}),
             "llm_analysis": analysis.get("explanation", ""),
             "severity": analysis.get("severity", "MEDIUM"),
             "recommended_action": analysis.get("recommended_action", "investigate"),
             "is_threat": analysis.get("is_threat", True),
             "attack_type": analysis.get("attack_type"),
+            "llm_analyzed": True,
             "label": alert.get("label", "unknown"),
+            "container_id": alert.get("container_id", "default"),
         }
 
     def process_one(self) -> dict | None:

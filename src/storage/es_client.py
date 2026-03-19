@@ -97,13 +97,19 @@ class ESClient:
         self.es.index(index="noname-all-traffic", document=doc)
 
     def update_mappings(self) -> None:
-        """Add container_id field to existing indices (safe to call multiple times)."""
+        """Add new fields to existing indices (safe to call multiple times)."""
+        new_fields = {
+            "container_id": {"type": "keyword"},
+            "is_threat": {"type": "boolean"},
+            "attack_type": {"type": "keyword"},
+            "llm_analyzed": {"type": "boolean"},
+        }
         for index_name in INDEX_MAPPINGS:
             try:
                 if self.es.indices.exists(index=index_name):
                     self.es.indices.put_mapping(
                         index=index_name,
-                        properties={"container_id": {"type": "keyword"}},
+                        properties=new_fields,
                     )
                     logger.info(f"Updated mapping for {index_name}")
             except Exception as e:

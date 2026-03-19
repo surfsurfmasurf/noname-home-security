@@ -214,6 +214,7 @@ def main():
                         "HIGH" if score >= 70 else "MEDIUM"
                     )
                     alert["recommended_action"] = "investigate"
+                    alert["llm_analyzed"] = False
                     actions_queue.put(alert)
 
         threads.append(
@@ -237,6 +238,7 @@ def main():
                         else "MEDIUM"
                     )
                     alert["recommended_action"] = "investigate"
+                    alert["llm_analyzed"] = False
                     actions_queue.put(alert)
 
         threads.append(
